@@ -4,6 +4,22 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <title>webcam</title>
         <script type="text/javascript">
+
+          function PIP(){
+          if(
+        document.pictureInPictureEnabled && 
+        !video.disablePictureInPicture) {
+            try {
+                if (document.pictureInPictureElement) {
+                    document.exitPictureInPicture();
+                }
+                video.requestPictureInPicture();
+            } catch(err) {
+                console.error(err);
+            }
+    }
+          
+          }
           window.onload = function(){
               document.querySelector("#video");
 console.log(video);
@@ -48,7 +64,7 @@ console.log(video);
 
             <tr align="center">
                 <td colspan="2">
-                    <button id="snap" onclick="snap()">Snap Photo</button>
+                    <button id="snap" onclick="PIP()">Go to PIP</button>
                 </td>
             </tr>
         </table>
