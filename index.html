@@ -1,72 +1,102 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-        <title>webcam</title>
-        <script type="text/javascript">
+<head>
+    <meta charset="UTF-8">
+    <title>webcam</title>
+    <script type="text/javascript">
+        let video;
+        let currentStream;
 
-          function PIP(){
-          if(
-        document.pictureInPictureEnabled && 
-        !video.disablePictureInPicture) {
-            try {
-                if (document.pictureInPictureElement) {
-                    document.exitPictureInPicture();
-                }
-                video.requestPictureInPicture();
-            } catch(err) {
-                console.error(err);
+        async function getCameras() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            const select = document.getElementById('cameraSelect');
+            select.innerHTML = ''; // limpa opções anteriores
+
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Camera ${index + 1}`;
+                select.appendChild(option);
+            });
+
+            if (videoDevices.length > 0) {
+                startCamera(videoDevices[0].deviceId);
             }
-    }
-          
-          }
-          window.onload = function(){
-              document.querySelector("#video");
-console.log(video);
-          navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
+        }
 
-          if (navigator.getUserMedia) {
-              navigator.getUserMedia( {
-                  video : true
-              },
-              handleVideo, videoError);
-          }
+        async function startCamera(deviceId) {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
 
-          function handleVideo(stream) {
-          video.srcObject = stream;
-      video.load();
-      video.play();
-          }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: deviceId } }
+                });
 
-          function videoError(e) {
-              // do something
-          }
+                currentStream = stream;
+                video.srcObject = stream;
+                video.play();
+            } catch (error) {
+                console.error("Erro ao acessar a câmera:", error);
+            }
+        }
 
-          }; 
-        </script>
-    </head>
-    <body>
-        <table border="1" width="900" align="center">
-            <tr align="center">
-                <td>
-                    Web Camera
-                    <div id="camera" style="height:300px; width:400px; border-style:solid;">
-                        <video id="video" width="400" height="300"></video>
-                    </div>
-                </td>
-                <td>
-                    Photo Frame
-                    <div id="frame" style="height:300px; width:400px; border-style:solid;">
-                        <canvas id="canvas" width="400" height="300"></canvas>
-                    </div>
-                </td>
-            </tr>
+        function onCameraChange() {
+            const selectedDeviceId = document.getElementById('cameraSelect').value;
+            startCamera(selectedDeviceId);
+        }
 
-            <tr align="center">
-                <td colspan="2">
-                    <button id="snap" onclick="PIP()">Go to PIP</button>
-                </td>
-            </tr>
-        </table>
-    </body>
+        function PIP() {
+            if (document.pictureInPictureEnabled && !video.disablePictureInPicture) {
+                try {
+                    if (document.pictureInPictureElement) {
+                        document.exitPictureInPicture();
+                    } else {
+                        video.requestPictureInPicture();
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+
+        window.onload = function () {
+            video = document.querySelector("#video");
+            getCameras();
+
+            document.getElementById('cameraSelect').addEventListener('change', onCameraChange);
+        };
+    </script>
+</head>
+<body>
+    <table border="1" width="900" align="center">
+        <tr align="center">
+            <td colspan="2">
+                <label for="cameraSelect">Escolha a câmera:</label>
+                <select id="cameraSelect"></select>
+            </td>
+        </tr>
+        <tr align="center">
+            <td>
+                Web Camera
+                <div id="camera" style="height:300px; width:400px; border-style:solid;">
+                    <video id="video" width="400" height="300" autoplay></video>
+                </div>
+            </td>
+            <td>
+                Photo Frame
+                <div id="frame" style="height:300px; width:400px; border-style:solid;">
+                    <canvas id="canvas" width="400" height="300"></canvas>
+                </div>
+            </td>
+        </tr>
+        <tr align="center">
+            <td colspan="2">
+                <button id="snap" onclick="PIP()">Go to PIP</button>
+            </td>
+        </tr>
+    </table>
+</body>
 </html>
