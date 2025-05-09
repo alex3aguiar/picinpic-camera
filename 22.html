@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contador de Distância</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: #f0f0f0;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+    }
+    #distance {
+      margin-top: 20px;
+      font-size: 1.5em;
+    }
+  </style>
+</head>
+<body>
+
+  <button onclick="startTracking()">Start</button>
+  <div id="distance">Distância: 0 metros</div>
+
+  <script>
+    let startCoords = null;
+    let watchId = null;
+
+    function toRadians(degrees) {
+      return degrees * Math.PI / 180;
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000; // Raio da Terra em metros
+      const dLat = toRadians(lat2 - lat1);
+      const dLon = toRadians(lon2 - lon1);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) {
+        alert("Geolocalização não é suportada neste dispositivo.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(position => {
+        startCoords = position.coords;
+        document.querySelector("button").disabled = true;
+        watchId = navigator.geolocation.watchPosition(updateDistance, error => {
+          console.error("Erro ao obter localização:", error);
+        }, {
+          enableHighAccuracy: true,
+          maximumAge: 1000,
+          timeout: 5000
+        });
+      }, error => {
+        alert("Não foi possível obter sua localização inicial.");
+      });
+    }
+
+    function updateDistance(position) {
+      if (!startCoords) return;
+
+      const currentCoords = position.coords;
+      const distance = calculateDistance(
+        startCoords.latitude,
+        startCoords.longitude,
+        currentCoords.latitude,
+        currentCoords.longitude
+      );
+
+      document.getElementById("distance").textContent =
+        `Distância: ${distance.toFixed(2)} metros`;
+    }
+  </script>
+</body>
+</html>
